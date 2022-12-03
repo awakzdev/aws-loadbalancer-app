@@ -14,7 +14,6 @@ The configuration should be secured so that the only connectivity allowed is the
 3. Port s 80 and 443 from the internet to the load balancer (with port 80 automatically
 redirecting to 443)
 4. Port 3306 from the VMs to the RDS
-All this
 
 ![image](https://user-images.githubusercontent.com/96201125/205367561-8ea50bfc-5520-4439-a7e8-0e3ec86c360a.png)
 
