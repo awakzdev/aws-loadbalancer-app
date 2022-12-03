@@ -29,7 +29,7 @@ resource "aws_db_subnet_group" "default" {
   ]
 
   tags = {
-    Name = "My DB subnet group"
+    Name = "db-subnet"
   }
 }
 
@@ -89,12 +89,12 @@ resource "aws_instance" "ec2" {
   }
 
   tags = {
-    Name = "ubuntu-node"
+    Name = "ubuntu-${each.key}"
   }
 }
 
 # RDS MySQL - Single AZ (eu-central-1a)
-resource "aws_db_instance" "rds_instance" {
+resource "aws_db_instance" "db" {
   allocated_storage      = 20
   identifier             = "rds-terraform"
   storage_type           = "gp2"
@@ -185,7 +185,7 @@ resource "aws_security_group" "alb_sg" {
   }
 
   tags = {
-    Name = "alb-sg"
+    Name = "alb-ingress-sg"
   }
 }
 
@@ -220,7 +220,7 @@ resource "aws_security_group" "ec2_sg" {
   }
 
   tags = {
-    Name = "ec2-sg"
+    Name = "ec2-egress-sg"
   }
 }
 
@@ -343,22 +343,4 @@ resource "aws_lb_target_group_attachment" "group" {
 resource "aws_key_pair" "auth" {
   key_name   = "key"
   public_key = file("~/.ssh/key.pub")
-}
-
-# Domain name on certificate 
-output "domain_name" {
-  value = "https://${aws_acm_certificate.ssl.domain_name}"
-}
-
-# VM IP address
-output "instance_ip_addr" {
-  value = {
-    "EC2-ubuntu-one" : aws_instance.ec2["vpc-subnet-one"].public_ip,
-    "EC2-ubuntu-two" : aws_instance.ec2["vpc-subnet-two"].public_ip
-  }
-}
-
-# ALB DNS name
-output "alb_dns" {
-  value = aws_lb.alb.dns_name
 }
