@@ -1,5 +1,5 @@
 ﻿### Terraform assignment - modules and passing parameters
- <hr>
+ ---
 It is required to deploy a configuration consisting of the following:
 1. Two ubuntu VMs that will run an application
 2. An ALB that will route the domain modules.cclab.cloud-castles.com to the ALB on port
