@@ -1,0 +1,10 @@
+{
+    "vpc" : {
+    "name": "vpc",
+    "cidr": "192.168.0.0/16",
+    "subnets" :[
+    {"name":"subnet-one", "cidr": "192.168.1.0/24", "az": "eu-central-1a", "private": "192.168.1.100"}, {"name":"subnet-two", "cidr":
+    "192.168.4.0/24", "az": "eu-central-1b", "private": "192.168.4.100"}
+    ]
+    }
+}
