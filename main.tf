@@ -144,7 +144,7 @@ resource "aws_security_group_rule" "egress_alb_traffic" {
   source_security_group_id = aws_security_group.ec2_sg.id
 }
 
-# EC2 SSH And Database connection
+# SG - DB Oubound Internet connection
 resource "aws_security_group" "rds_sg" {
   name        = "rds_sg"
   description = "allows outbound rds traffic"
@@ -169,7 +169,7 @@ resource "aws_security_group" "alb_sg" {
   description = "allows inbound alb traffic"
   vpc_id      = aws_vpc.main.id
 
-  # Delete after successfully implementing certification 
+  # Delete after successfully implementing certification
   ingress {
     from_port   = 80
     to_port     = 80
@@ -280,8 +280,8 @@ resource "aws_lb" "alb" {
   }
 }
 
-# ALB Listener - Testing
-resource "aws_lb_listener" "alb-listener-tls" {
+# ALB Listener - HTTP Port 80 Traffic
+resource "aws_lb_listener" "alb_port_80" {
   load_balancer_arn = aws_lb.alb.arn
   port              = "80"
   protocol          = "HTTP"
@@ -293,7 +293,7 @@ resource "aws_lb_listener" "alb-listener-tls" {
 }
 
 # # ALB HTTPS Listener - TLS Certificate (Registered domain required)
-# resource "aws_lb_listener" "alb-listener-tls" {
+# resource "aws_lb_listener" "alb_listener_tls" {
 #   load_balancer_arn = aws_lb.alb.arn
 #   port              = "443"
 #   protocol          = "HTTPS"
@@ -307,7 +307,7 @@ resource "aws_lb_listener" "alb-listener-tls" {
 # }
 
 # # ALB Listener - Redirect HTTP to HTTPS (Certificate needed)
-# resource "aws_lb_listener" "alb-listener-redirect" {
+# resource "aws_lb_listener" "alb_listener_redirect" {
 #   load_balancer_arn = aws_lb.alb.arn
 #   port              = "80"
 #   protocol          = "HTTP"
