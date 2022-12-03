@@ -81,7 +81,7 @@ resource "aws_instance" "ec2" {
   instance_type = "t2.micro"
   ami           = data.aws_ami.server_ami.id
   key_name      = aws_key_pair.auth.id
-  user_data     = file("install_apache.sh")
+  user_data     = file("userdata/install_apache.sh")
 
   network_interface {
     network_interface_id = aws_network_interface.eni[each.key].id
