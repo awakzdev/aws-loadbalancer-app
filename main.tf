@@ -20,6 +20,19 @@ resource "aws_subnet" "public" {
   }
 }
 
+# Database Subnet group - Minimum 2 AZ required
+resource "aws_db_subnet_group" "default" {
+  name = "main"
+  subnet_ids = [
+    aws_subnet.public["vpc-subnet-one"].id,
+    aws_subnet.public["vpc-subnet-two"].id
+  ]
+
+  tags = {
+    Name = "My DB subnet group"
+  }
+}
+
 # ENI with EC2 Security Groups attached
 resource "aws_network_interface" "eni" {
   for_each        = local.api
@@ -41,7 +54,7 @@ resource "aws_internet_gateway" "gw" {
   }
 }
 
-# Main Routing table
+# Main Routing table - GW Link
 resource "aws_route_table" "rt" {
   vpc_id = aws_vpc.main.id
 
@@ -80,7 +93,38 @@ resource "aws_instance" "ec2" {
   }
 }
 
-# Allows EC2 to ALB Connection 
+# RDS MySQL - Single AZ (eu-central-1a)
+resource "aws_db_instance" "rds_instance" {
+  allocated_storage      = 20
+  identifier             = "rds-terraform"
+  storage_type           = "gp2"
+  engine                 = "mysql"
+  engine_version         = "8.0.27"
+  instance_class         = "db.t2.micro"
+  db_name                = "rds_mysql"
+  username               = "admin"
+  password               = "password"
+  availability_zone      = "eu-central-1a"
+  vpc_security_group_ids = [aws_security_group.rds_sg.id]
+  db_subnet_group_name   = aws_db_subnet_group.default.id
+  skip_final_snapshot    = true
+
+  tags = {
+    Name = "RDSServerInstance"
+  }
+}
+
+# SG Role - Allows EC2 to ALB Connection 
+resource "aws_security_group_rule" "db_ec2_traffic" {
+  type                     = "ingress"
+  from_port                = "80"
+  to_port                  = "80"
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.rds_sg.id
+  source_security_group_id = aws_security_group.ec2_sg.id
+}
+
+# SG Role - Allows EC2 to DB Connection 
 resource "aws_security_group_rule" "ingress_ec2_traffic" {
   type                     = "ingress"
   from_port                = "80"
@@ -90,7 +134,7 @@ resource "aws_security_group_rule" "ingress_ec2_traffic" {
   source_security_group_id = aws_security_group.alb_sg.id
 }
 
-# Allows ALB to EC2 Connection 
+# SG Role - Allows ALB to EC2 Connection 
 resource "aws_security_group_rule" "egress_alb_traffic" {
   type                     = "egress"
   from_port                = "80"
@@ -100,7 +144,26 @@ resource "aws_security_group_rule" "egress_alb_traffic" {
   source_security_group_id = aws_security_group.ec2_sg.id
 }
 
-# ALB Inbound Internet traffic
+# EC2 SSH And Database connection
+resource "aws_security_group" "rds_sg" {
+  name        = "rds_sg"
+  description = "allows outbound rds traffic"
+  vpc_id      = aws_vpc.main.id
+
+  # Egress - Internet
+  egress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "rds-sg"
+  }
+}
+
+# SG - ALB Inbound Internet traffic
 resource "aws_security_group" "alb_sg" {
   name        = "alb-sg"
   description = "allows inbound alb traffic"
@@ -114,7 +177,7 @@ resource "aws_security_group" "alb_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-    ingress {
+  ingress {
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
@@ -122,11 +185,11 @@ resource "aws_security_group" "alb_sg" {
   }
 
   tags = {
-    Name = "ALB-sg"
+    Name = "alb-sg"
   }
 }
 
-# EC2 SSH And Database connection
+# SG - EC2 SSH And Database connection
 resource "aws_security_group" "ec2_sg" {
   name        = "ec2-sg"
   description = "allow ssh to ec2"
@@ -157,7 +220,7 @@ resource "aws_security_group" "ec2_sg" {
   }
 
   tags = {
-    Name = "EC2-sg"
+    Name = "ec2-sg"
   }
 }
 
