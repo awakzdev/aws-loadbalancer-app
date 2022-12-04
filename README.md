@@ -25,7 +25,6 @@ There should be a module for each of the components:
 
 Each module should configure its own security groups, using arguments from other modules'
 output.
-Fill in missing design pieces by yourself, if required.
 
 ## Setting credentials 
  ##### _Credentials key file is set within ~/.aws/credentials - Please [refer to documentation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)_ or use `aws configure` as a different approach.
