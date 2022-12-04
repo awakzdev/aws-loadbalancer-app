@@ -216,7 +216,7 @@ resource "aws_security_group" "ec2_sg" {
   }
 }
 
-# ACM Certificate 
+# ACM Certificate issue
 resource "aws_acm_certificate" "ssl" {
   domain_name       = "modules.cclab.cloud-castles.com"
   validation_method = "DNS"
@@ -230,12 +230,19 @@ resource "aws_acm_certificate" "ssl" {
   }
 }
 
-# Route 53 Zone
-resource "aws_route53_zone" "example" {
-  name = "modules.cclab.cloud-castles.com"
+# ACM Certificate validation
+resource "aws_acm_certificate_validation" "example" {
+  certificate_arn         = aws_acm_certificate.ssl.arn
+  validation_record_fqdns = [for record in aws_route53_record.example : record.fqdn]
 }
 
-# Route 53 Record
+# Route 53 Zone
+data "aws_route53_zone" "example" {
+  name = "cclab.cloud-castles.com"
+  private_zone = false
+}
+
+# Route 53 - Certificate Record
 resource "aws_route53_record" "example" {
   for_each = {
     for dvo in aws_acm_certificate.ssl.domain_validation_options : dvo.domain_name => {
@@ -250,7 +257,20 @@ resource "aws_route53_record" "example" {
   records         = [each.value.record]
   ttl             = 60
   type            = each.value.type
-  zone_id         = aws_route53_zone.example.zone_id
+  zone_id         = data.aws_route53_zone.example.zone_id
+}
+
+# Route 53 - ALB Alias
+resource "aws_route53_record" "alias_route53_record" {
+  zone_id = data.aws_route53_zone.example.zone_id
+  name    = "modules.cclab.cloud-castles.com"
+  type    = "A"
+
+  alias {
+    name                   = aws_lb.alb.dns_name
+    zone_id                = aws_lb.alb.zone_id
+    evaluate_target_health = true
+  }
 }
 
 # Application Load balancer - set to two different AZ's
@@ -272,11 +292,13 @@ resource "aws_lb" "alb" {
   }
 }
 
-# ALB Listener - HTTP Port 80 Traffic
-resource "aws_lb_listener" "alb_port_80" {
+# ALB HTTPS Listener - TLS Certificate
+resource "aws_lb_listener" "alb_listener_tls" {
   load_balancer_arn = aws_lb.alb.arn
-  port              = "80"
-  protocol          = "HTTP"
+  port              = "443"
+  protocol          = "HTTPS"
+  ssl_policy = "ELBSecurityPolicy-2016-08"
+  certificate_arn = aws_acm_certificate.ssl.arn
 
   default_action {
     type             = "forward"
@@ -284,36 +306,25 @@ resource "aws_lb_listener" "alb_port_80" {
   }
 }
 
-# # ALB HTTPS Listener - TLS Certificate (Registered domain required)
-# resource "aws_lb_listener" "alb_listener_tls" {
-#   load_balancer_arn = aws_lb.alb.arn
-#   port              = "443"
-#   protocol          = "HTTPS"
-#   ssl_policy = "ELBSecurityPolicy-2016-08"
-#   certificate_arn = aws_acm_certificate.ssl.arn
+# ALB HTTPS Listener - Redirects HTTP ALB DNS traffic to domain URL
+resource "aws_lb_listener" "alb_listener_redirect" {
+  load_balancer_arn = aws_lb.alb.arn
+  port              = "80"
+  protocol          = "HTTP"
 
-#   default_action {
-#     type             = "forward"
-#     target_group_arn = aws_lb_target_group.alb-target.arn
-#   }
-# }
-
-# # ALB Listener - Redirect HTTP to HTTPS (Certificate needed)
-# resource "aws_lb_listener" "alb_listener_redirect" {
-#   load_balancer_arn = aws_lb.alb.arn
-#   port              = "80"
-#   protocol          = "HTTP"
-
-#   default_action {
-#     type             = "redirect"
-
-#     redirect {
-#       port = "443"
-#       protocol = "HTTPS"
-#       status_code = "HTTP_301"
-#     }
-#   }
-# }
+  default_action {
+    order = 1
+    type  = "redirect"
+    redirect {
+      host        = "${aws_acm_certificate.ssl.domain_name}"
+      path        = "/#{path}"
+      port        = "443"
+      protocol    = "HTTPS"
+      query       = "#{query}"
+      status_code = "HTTP_301"
+    }
+  }
+}
 
 # ALB Target Group - Receives HTTP traffic
 resource "aws_lb_target_group" "alb-target" {
@@ -323,7 +334,7 @@ resource "aws_lb_target_group" "alb-target" {
   vpc_id   = aws_vpc.main.id
 }
 
-# ALB - VM Target Group on port 80
+# ALB - Target Group on port 80 / Register VMs
 resource "aws_lb_target_group_attachment" "group" {
   for_each         = local.api
   target_group_arn = aws_lb_target_group.alb-target.arn
