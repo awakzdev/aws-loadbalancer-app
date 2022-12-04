@@ -1,5 +1,4 @@
-﻿### Terraform assignment - modules and passing parameters
- ---
+﻿## *Its purpose is to serve the following configuration*
 It is required to deploy a configuration consisting of the following:
 1. Two ubuntu VMs that will run an application
 2. An ALB that will route the domain modules.cclab.cloud-castles.com to the ALB on port
@@ -27,3 +26,18 @@ There should be a module for each of the components:
 Each module should configure its own security groups, using arguments from other modules'
 output.
 Fill in missing design pieces by yourself, if required.
+
+## Setting credentials 
+ ##### _Credentials key file is set within ~/.aws/credentials - Please [refer to documentation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)_ or use `aws configure` as a different approach.
+*Your credentials file should look like this*
+ ```
+ [default]
+# This key identifies your AWS account.
+aws_access_key_id = foo
+# Treat this secret key like a password. Never share it or store it in source
+# control. If your secret key is ever disclosed, immediately use IAM to delete
+# the key pair and create a new one.
+aws_secret_access_key = foo
+ ```
+ ## Generating an SSH Key
+ `ssh-keygen -t ed25519` > You'll need to rename it to 'key' otherwise please edit the resource aws_key_pair under main.tf.
