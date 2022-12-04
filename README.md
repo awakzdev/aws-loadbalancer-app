@@ -23,6 +23,7 @@ There should be a module for each of the components:
 2. ALB, with DNS configuration, certificate and target group.
 3. VMs
 4. RDS
+
 Each module should configure its own security groups, using arguments from other modules'
 output.
 Fill in missing design pieces by yourself, if required.
