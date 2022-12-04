@@ -1,3 +1,7 @@
+####################
+#      Network
+####################
+
 # Main VPC
 resource "aws_vpc" "main" {
   cidr_block = local.json.vpc.cidr
@@ -20,32 +24,7 @@ resource "aws_subnet" "public" {
   }
 }
 
-# Database Subnet group - Minimum 2 AZ required
-resource "aws_db_subnet_group" "default" {
-  name = "main"
-  subnet_ids = [
-    aws_subnet.public["vpc-subnet-one"].id,
-    aws_subnet.public["vpc-subnet-two"].id
-  ]
-
-  tags = {
-    Name = "db-subnet"
-  }
-}
-
-# ENI with EC2 Security Groups attached
-resource "aws_network_interface" "eni" {
-  for_each        = local.api
-  subnet_id       = aws_subnet.public[each.key].id
-  private_ips     = [each.value.subnet_private_ip]
-  security_groups = [aws_security_group.ec2_sg.id]
-
-  tags = {
-    Name = "primary_network_interface"
-  }
-}
-
-# Main Internet Gateway 
+# Internet Gateway 
 resource "aws_internet_gateway" "gw" {
   vpc_id = aws_vpc.main.id
 
@@ -54,7 +33,7 @@ resource "aws_internet_gateway" "gw" {
   }
 }
 
-# Main Routing table - GW Link
+# Routing table - Linking GW
 resource "aws_route_table" "rt" {
   vpc_id = aws_vpc.main.id
 
@@ -75,6 +54,37 @@ resource "aws_route_table_association" "rt_a" {
   route_table_id = aws_route_table.rt.id
 }
 
+# Database Subnet group - Minimum 2 AZ required
+resource "aws_db_subnet_group" "default" {
+  name = "main"
+  subnet_ids = [
+    aws_subnet.public["vpc-subnet-one"].id,
+    aws_subnet.public["vpc-subnet-two"].id
+  ]
+
+  tags = {
+    Name = "db-subnet"
+  }
+}
+
+
+
+####################
+#  Virtual-Machine
+####################
+
+# ENI with EC2 Security Groups attached
+resource "aws_network_interface" "eni" {
+  for_each        = local.api
+  subnet_id       = aws_subnet.public[each.key].id
+  private_ips     = [each.value.subnet_private_ip]
+  security_groups = [aws_security_group.ec2_sg.id]
+
+  tags = {
+    Name = "primary_network_interface"
+  }
+}
+
 # EC2 Instance with ENI Attached on 2 AZ
 resource "aws_instance" "ec2" {
   for_each      = local.api
@@ -92,6 +102,18 @@ resource "aws_instance" "ec2" {
     Name = "ubuntu-${each.key}"
   }
 }
+
+# VM Key pair
+resource "aws_key_pair" "auth" {
+  key_name   = "key"
+  public_key = file("~/.ssh/key.pub")
+}
+
+
+
+####################
+#     Database
+####################
 
 # RDS MySQL - Single AZ (eu-central-1a)
 resource "aws_db_instance" "db" {
@@ -113,6 +135,12 @@ resource "aws_db_instance" "db" {
     Name = "RDSServerInstance"
   }
 }
+
+
+
+####################
+#     Security
+####################
 
 # SG Role - Allows EC2 to ALB Connection 
 resource "aws_security_group_rule" "db_ec2_traffic" {
@@ -161,7 +189,6 @@ resource "aws_security_group" "alb_sg" {
   description = "allows inbound alb traffic"
   vpc_id      = aws_vpc.main.id
 
-  # Delete after successfully implementing certification
   ingress {
     from_port   = 80
     to_port     = 80
@@ -216,6 +243,12 @@ resource "aws_security_group" "ec2_sg" {
   }
 }
 
+
+
+####################
+#  Certificate - ACM
+####################
+
 # ACM Certificate issue
 resource "aws_acm_certificate" "ssl" {
   domain_name       = "modules.cclab.cloud-castles.com"
@@ -236,6 +269,12 @@ resource "aws_acm_certificate_validation" "example" {
   validation_record_fqdns = [for record in aws_route53_record.example : record.fqdn]
 }
 
+  
+
+####################
+#   Route 53 - DNS
+####################
+  
 # Route 53 Zone
 data "aws_route53_zone" "example" {
   name = "cclab.cloud-castles.com"
@@ -273,6 +312,12 @@ resource "aws_route53_record" "alias_route53_record" {
   }
 }
 
+  
+  
+####################
+#   Load Balancer
+####################
+  
 # Application Load balancer - set to two different AZ's
 resource "aws_lb" "alb" {
   name               = "alb-dev"
@@ -340,10 +385,4 @@ resource "aws_lb_target_group_attachment" "group" {
   target_group_arn = aws_lb_target_group.alb-target.arn
   target_id        = aws_instance.ec2[each.key].id
   port             = 80
-}
-
-# VM Key pair
-resource "aws_key_pair" "auth" {
-  key_name   = "key"
-  public_key = file("~/.ssh/key.pub")
 }
