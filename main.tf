@@ -117,8 +117,8 @@ resource "aws_db_instance" "db" {
 # SG Role - Allows EC2 to ALB Connection 
 resource "aws_security_group_rule" "db_ec2_traffic" {
   type                     = "ingress"
-  from_port                = "80"
-  to_port                  = "80"
+  from_port                = "3306"
+  to_port                  = "3306"
   protocol                 = "tcp"
   security_group_id        = aws_security_group.rds_sg.id
   source_security_group_id = aws_security_group.ec2_sg.id
@@ -149,14 +149,6 @@ resource "aws_security_group" "rds_sg" {
   name        = "rds_sg"
   description = "allows outbound rds traffic"
   vpc_id      = aws_vpc.main.id
-
-  # Egress - Internet
-  egress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
 
   tags = {
     Name = "rds-sg"
