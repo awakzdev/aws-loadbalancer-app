@@ -172,7 +172,7 @@ resource "aws_security_group_rule" "egress_alb_traffic" {
   source_security_group_id = aws_security_group.ec2_sg.id
 }
 
-# SG - DB Oubound Internet connection
+# SG - RDS Reserved for SG Role
 resource "aws_security_group" "rds_sg" {
   name        = "rds_sg"
   description = "allows outbound rds traffic"
