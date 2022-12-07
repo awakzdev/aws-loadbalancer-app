@@ -1,10 +1,39 @@
+Skip to content
+Search or jump to…
+Pull requests
+Issues
+Codespaces
+Marketplace
+Explore
+ 
+@awakzdev 
+Cloud-Castles
+/
+aws-routed-alb-application
+Private
+Code
+Issues
+Pull requests
+Actions
+Security
+Insights
+Settings
+aws-routed-alb-application/main.tf
+
+elazar.chodjayev dev
+Latest commit 124834f 20 hours ago
+ History
+ 0 contributors
+369 lines (307 sloc)  8.42 KB
+
 ####################
 #      Network
 ####################
 
 # Main VPC
 resource "aws_vpc" "main" {
-  cidr_block = local.json.vpc.cidr
+  cidr_block         = local.json.vpc.cidr
+  enable_dns_support = true
 
   tags = {
     Name = "dev-vpc"
@@ -68,35 +97,20 @@ resource "aws_db_subnet_group" "default" {
 }
 
 
-
 ####################
 #  Virtual-Machine
 ####################
 
-# ENI with EC2 Security Groups attached
-resource "aws_network_interface" "eni" {
-  for_each        = local.api
-  subnet_id       = aws_subnet.public[each.key].id
-  private_ips     = [each.value.subnet_private_ip]
-  security_groups = [aws_security_group.ec2_sg.id]
-
-  tags = {
-    Name = "primary_network_interface"
-  }
-}
-
-# EC2 Instance with ENI Attached on 2 AZ
+# EC2 Instance on 2 different AZ's
 resource "aws_instance" "ec2" {
-  for_each      = local.api
-  instance_type = "t2.micro"
-  ami           = data.aws_ami.server_ami.id
-  key_name      = aws_key_pair.auth.id
-  user_data     = file("userdata/install_apache.sh")
-
-  network_interface {
-    network_interface_id = aws_network_interface.eni[each.key].id
-    device_index         = 0
-  }
+  for_each               = local.api
+  instance_type          = "t2.micro"
+  ami                    = data.aws_ami.server_ami.id
+  key_name               = aws_key_pair.auth.id
+  vpc_security_group_ids = [aws_security_group.ec2_sg.id]
+  subnet_id              = aws_subnet.public.id
+  availability_zone      = each.value.subnet_az
+  user_data              = file("userdata/install_apache.sh")
 
   tags = {
     Name = "ubuntu-${each.key}"
@@ -108,7 +122,6 @@ resource "aws_key_pair" "auth" {
   key_name   = "key"
   public_key = file("~/.ssh/key.pub")
 }
-
 
 
 ####################
@@ -135,7 +148,6 @@ resource "aws_db_instance" "db" {
     Name = "RDSServerInstance"
   }
 }
-
 
 
 ####################
@@ -244,7 +256,6 @@ resource "aws_security_group" "ec2_sg" {
 }
 
 
-
 ####################
 #  Certificate - ACM
 ####################
@@ -269,15 +280,14 @@ resource "aws_acm_certificate_validation" "example" {
   validation_record_fqdns = [for record in aws_route53_record.example : record.fqdn]
 }
 
-  
 
 ####################
 #   Route 53 - DNS
 ####################
-  
+
 # Route 53 Zone
 data "aws_route53_zone" "example" {
-  name = "cclab.cloud-castles.com"
+  name         = "cclab.cloud-castles.com"
   private_zone = false
 }
 
@@ -312,12 +322,11 @@ resource "aws_route53_record" "alias_route53_record" {
   }
 }
 
-  
-  
+
 ####################
 #   Load Balancer
 ####################
-  
+
 # Application Load balancer - set to two different AZ's
 resource "aws_lb" "alb" {
   name               = "alb-dev"
@@ -342,8 +351,8 @@ resource "aws_lb_listener" "alb_listener_tls" {
   load_balancer_arn = aws_lb.alb.arn
   port              = "443"
   protocol          = "HTTPS"
-  ssl_policy = "ELBSecurityPolicy-2016-08"
-  certificate_arn = aws_acm_certificate.ssl.arn
+  ssl_policy        = "ELBSecurityPolicy-2016-08"
+  certificate_arn   = aws_acm_certificate.ssl.arn
 
   default_action {
     type             = "forward"
@@ -361,7 +370,7 @@ resource "aws_lb_listener" "alb_listener_redirect" {
     order = 1
     type  = "redirect"
     redirect {
-      host        = "${aws_acm_certificate.ssl.domain_name}"
+      host        = aws_acm_certificate.ssl.domain_name
       path        = "/#{path}"
       port        = "443"
       protocol    = "HTTPS"
@@ -386,3 +395,18 @@ resource "aws_lb_target_group_attachment" "group" {
   target_id        = aws_instance.ec2[each.key].id
   port             = 80
 }
+Footer
+© 2022 GitHub, Inc.
+Footer navigation
+Terms
+Privacy
+Security
+Status
+Docs
+Contact GitHub
+Pricing
+API
+Training
+Blog
+About
+aws-routed-alb-application/main.tf at dev · Cloud-Castles/aws-routed-alb-application
