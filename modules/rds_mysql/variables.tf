@@ -1,8 +1,3 @@
-variable "ec2_name" {
-  type        = string
-  description = "Naming convention for EC2 Instance"
-}
-
 variable "name_prefix" {
   type        = string
   description = "Naming convention for tagged resources"

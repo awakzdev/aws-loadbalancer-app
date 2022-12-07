@@ -64,10 +64,8 @@ resource "aws_route_table_association" "rt_a" {
 
 # Database Subnet group - Minimum 2 AZ required
 resource "aws_db_subnet_group" "default" {
-  count = length(var.subnet_cidrs)
-
-  name       = "main"
-  subnet_ids = [aws_subnet.public[count.index].id]
+  name       = "subnet-${var.name_prefix}"
+  subnet_ids = [for k in aws_subnet.public : k.id]
 
   tags = {
     Name = "rds-subnet-${var.name_prefix}"

@@ -1,28 +1,11 @@
-####################
-#      Network
-####################
+module "network" {
+  source = "../network"
 
-# Main VPC
-resource "aws_vpc" "main" {
-  cidr_block = var.vpc_cidr
-
-  tags = {
-    Name = "vpc-${var.name_prefix}"
-  }
-}
-
-# Two Subnets in different AZ - Public IP on launch
-resource "aws_subnet" "public" {
-  count = length(var.subnet_cidrs)
-
-  vpc_id                  = aws_vpc.main.id
-  cidr_block              = var.subnet_cidrs[count.index]
-  map_public_ip_on_launch = true
-  availability_zone       = var.az[count.index]
-
-  tags = {
-    Name = "subnet-${var.name_prefix}-${count.index}"
-  }
+  aws_region   = var.aws_region
+  vpc_cidr     = var.vpc_cidr
+  subnet_cidrs = var.subnet_cidrs
+  az           = var.az
+  name_prefix  = var.name_prefix
 }
 
 
@@ -32,9 +15,9 @@ resource "aws_subnet" "public" {
 
 # SG - EC2 SSH And Database connection
 resource "aws_security_group" "ec2_sg" {
-  name        = var.ec2_name
+  name        = "ec2-sg-${var.name_prefix}"
   description = "Allows SSH and outbound connection"
-  vpc_id      = aws_vpc.main.id
+  vpc_id      = module.network.vpc_id
 
   # SSH
   ingress {
@@ -86,15 +69,15 @@ resource "aws_instance" "ec2" {
   instance_type          = "t2.micro"
   ami                    = data.aws_ami.server_ami.id
   key_name               = aws_key_pair.auth.id
-  subnet_id              = aws_subnet.public[count.index].id
+  subnet_id              = module.network.subnet_id[count.index]
   vpc_security_group_ids = [aws_security_group.ec2_sg.id]
   user_data              = <<EOF
-  #! /bin/bash
-  sudo apt-get update
-  sudo apt-get install -y apache2
-  sudo systemctl start apache2
-  sudo systemctl enable apache2
-  echo "The page was created by the user data" | sudo tee /var/www/html/index.html
+          #!/bin/bash
+          sudo apt-get update
+          sudo apt-get install -y apache2
+          sudo systemctl start apache2
+          sudo systemctl enable apache2
+          echo "The page was created by the user data" | sudo tee /var/www/html/index.html
   EOF
 
   tags = {

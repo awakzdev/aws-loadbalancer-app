@@ -1,7 +1,6 @@
 module "alb" {
   source = "../alb"
 
-  ec2_name          = var.ec2_name
   name_prefix       = var.name_prefix
   vpc_cidr          = var.vpc_cidr
   subnet_cidrs      = var.subnet_cidrs

@@ -8,7 +8,6 @@ module "ec2" {
   az            = var.az
   aws_region    = var.aws_region
   vpc_cidr      = var.vpc_cidr
-  ec2_name      = var.ec2_name
 }
 
 # SG Role - Allows ALB to EC2 Connection 
@@ -113,7 +112,7 @@ resource "aws_lb" "alb" {
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb_sg.id]
 
-  subnets = [module.ec2.subnet_cidr[0], module.ec2.subnet_cidr[1]]
+  subnets = [for subnet in module.ec2.subnet_cidr : subnet]
 
   enable_deletion_protection = false
 

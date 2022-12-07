@@ -13,11 +13,6 @@ variable "domain_name" {
   description = "Registered domain name here"
 }
 
-variable "ec2_name" {
-  type        = string
-  description = "Naming convention for EC2 VM"
-}
-
 variable "name_prefix" {
   type        = string
   description = "Naming convention for tagged resources"

@@ -42,8 +42,3 @@ variable "aws_region" {
   type        = string
   description = "Region where all AWS Resources will be created"
 }
-
-variable "ec2_name" {
-  type        = string
-  description = "Naming convention for EC2 VM"
-}
