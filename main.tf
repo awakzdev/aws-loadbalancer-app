@@ -1,31 +1,3 @@
-Skip to content
-Search or jump to…
-Pull requests
-Issues
-Codespaces
-Marketplace
-Explore
- 
-@awakzdev 
-Cloud-Castles
-/
-aws-routed-alb-application
-Private
-Code
-Issues
-Pull requests
-Actions
-Security
-Insights
-Settings
-aws-routed-alb-application/main.tf
-
-elazar.chodjayev dev
-Latest commit 124834f 20 hours ago
- History
- 0 contributors
-369 lines (307 sloc)  8.42 KB
-
 ####################
 #      Network
 ####################
@@ -395,18 +367,3 @@ resource "aws_lb_target_group_attachment" "group" {
   target_id        = aws_instance.ec2[each.key].id
   port             = 80
 }
-Footer
-© 2022 GitHub, Inc.
-Footer navigation
-Terms
-Privacy
-Security
-Status
-Docs
-Contact GitHub
-Pricing
-API
-Training
-Blog
-About
-aws-routed-alb-application/main.tf at dev · Cloud-Castles/aws-routed-alb-application
