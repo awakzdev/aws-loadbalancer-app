@@ -1,15 +1,3 @@
-module "ec2" {
-  source = "../ec2"
-
-  name_prefix   = var.name_prefix
-  subnet_cidrs  = var.subnet_cidrs
-  key_pair_name = var.key_pair_name
-  ssh_file_name = var.ssh_file_name
-  az            = var.az
-  aws_region    = var.aws_region
-  vpc_cidr      = var.vpc_cidr
-}
-
 # SG Role - Allows ALB to EC2 Connection 
 resource "aws_security_group_rule" "alb_ec2_traffic" {
   type                     = "egress"
@@ -17,14 +5,14 @@ resource "aws_security_group_rule" "alb_ec2_traffic" {
   to_port                  = "80"
   protocol                 = "tcp"
   security_group_id        = aws_security_group.alb_sg.id
-  source_security_group_id = aws_security_group.ec2_sg.id
+  source_security_group_id = var.ec2_sg
 }
 
 # SG - ALB Inbound Internet traffic
 resource "aws_security_group" "alb_sg" {
   name        = "alb-sg"
   description = "allows inbound alb traffic"
-  vpc_id      = module.ec2.vpc_id
+  vpc_id      = var.vpc_id
 
   ingress {
     from_port   = 80
@@ -51,7 +39,7 @@ resource "aws_security_group_rule" "ec2_alb_traffic" {
   from_port                = "80"
   to_port                  = "80"
   protocol                 = "tcp"
-  security_group_id        = aws_security_group.ec2_sg.id
+  security_group_id        = var.ec2_sg
   source_security_group_id = aws_security_group.alb_sg.id
 }
 
@@ -59,7 +47,7 @@ resource "aws_security_group_rule" "ec2_alb_traffic" {
 resource "aws_security_group" "ec2_sg" {
   name        = "ec2-sg"
   description = "allow ssh to ec2"
-  vpc_id      = module.ec2.vpc_id
+  vpc_id      = var.vpc_id
 
   # SSH
   ingress {
@@ -88,7 +76,7 @@ resource "aws_security_group" "ec2_sg" {
 
 # ACM Certificate issue
 resource "aws_acm_certificate" "ssl" {
-  domain_name       = var.domain_name_alias
+  domain_name       = var.domain_alias
   validation_method = "DNS"
 
   lifecycle {
@@ -112,7 +100,7 @@ resource "aws_lb" "alb" {
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb_sg.id]
 
-  subnets = [for subnet in module.ec2.subnet_cidr : subnet]
+  subnets = [for k in var.subnet_id : k]
 
   enable_deletion_protection = false
 
@@ -160,7 +148,7 @@ resource "aws_lb_target_group" "alb_target" {
   name     = "alb-target-group"
   port     = 80
   protocol = "HTTP"
-  vpc_id   = module.ec2.vpc_id
+  vpc_id   = var.vpc_id
 }
 
 # ALB - Attach VM's on port 80
@@ -168,6 +156,6 @@ resource "aws_lb_target_group_attachment" "group" {
   count = length(var.subnet_cidrs)
 
   target_group_arn = aws_lb_target_group.alb_target.arn
-  target_id        = module.ec2.ec2_id[count.index]
+  target_id        = var.ec2_id[count.index]
   port             = 80
 }

@@ -1,25 +1,10 @@
-module "alb" {
-  source = "../alb"
-
-  name_prefix       = var.name_prefix
-  vpc_cidr          = var.vpc_cidr
-  subnet_cidrs      = var.subnet_cidrs
-  aws_region        = var.aws_region
-  az                = var.az
-  key_pair_name     = var.key_pair_name
-  ssh_file_name     = var.ssh_file_name
-  domain_name_alias = var.domain_alias
-  environment       = var.environment
-
-}
-
 ####################
 #  ACM - Certificate
 ####################
 
 # ACM Certificate issue
 resource "aws_acm_certificate" "ssl" {
-  domain_name       = module.alb.domain_alias
+  domain_name       = var.domain_alias
   validation_method = "DNS"
 
   lifecycle {
@@ -69,12 +54,12 @@ resource "aws_route53_record" "dns" {
 # Route 53 - ALB Alias
 resource "aws_route53_record" "alias_route53_record" {
   zone_id = data.aws_route53_zone.dns.zone_id
-  name    = module.alb.domain_alias
+  name    = var.domain_alias
   type    = "A"
 
   alias {
-    name                   = module.alb.dns_name
-    zone_id                = module.alb.zone_id
+    name                   = var.dns_name
+    zone_id                = var.zone_id
     evaluate_target_health = true
   }
 }

@@ -13,37 +13,12 @@ variable "domain_name" {
   description = "Registered domain name here"
 }
 
-variable "name_prefix" {
+variable "dns_name" {
   type        = string
-  description = "Naming convention for tagged resources"
+  description = "Application load balancer zone Name"
 }
 
-variable "vpc_cidr" {
+variable "zone_id" {
   type        = string
-  description = "VPC CIDR's to create resources on"
-}
-
-variable "subnet_cidrs" {
-  type        = list(any)
-  description = "Subnet CIDR's to create resources on - Minimum of 2"
-}
-
-variable "aws_region" {
-  type        = string
-  description = "AWS Region to create resources on"
-}
-
-variable "az" {
-  type        = list(any)
-  description = "Availability-Zones - Should match numbers of CIDRs given and AWS Region"
-}
-
-variable "ssh_file_name" {
-  type        = string
-  description = "Naming convention for your .pub SSH Key (key.pub)"
-}
-
-variable "key_pair_name" {
-  type        = string
-  description = "Naming convention for key_pair"
+  description = "Application load balancer zone ID"
 }

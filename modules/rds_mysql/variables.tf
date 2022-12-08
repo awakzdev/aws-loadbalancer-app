@@ -3,19 +3,14 @@ variable "name_prefix" {
   description = "Naming convention for tagged resources"
 }
 
-variable "database_name" {
+variable "vpc_id" {
   type        = string
-  description = "Naming convention for Database"
+  description = "AWS VPC ID"
 }
 
-variable "instance_class" {
+variable "ec2_sg" {
   type        = string
-  description = "Instance type - i.e db.tf2.micro"
-}
-
-variable "mysql_version" {
-  type        = string
-  description = "Database engine version - i.e 8.0.27"
+  description = "Security group for EC2 Instance - SG Role (Pairing)"
 }
 
 variable "size_initial_gb" {
@@ -28,19 +23,19 @@ variable "size_max_gb" {
   description = "Database max scale size (GB)"
 }
 
-variable "vpc_cidr" {
+variable "mysql_version" {
   type        = string
-  description = "CIDR block of the VPC where the resources will be created - Include a prefix i.e '/16'"
+  description = "Database engine version - i.e 8.0.27"
 }
 
-variable "subnet_cidrs" {
-  type        = list(string)
-  description = "A list of Subnets CIDR's - Should consist of minimum 2"
+variable "instance_class" {
+  type        = string
+  description = "Instance type - i.e db.tf2.micro"
 }
 
-variable "aws_region" {
+variable "database_name" {
   type        = string
-  description = "Region where all AWS Resources will be created"
+  description = "Naming convention for Database"
 }
 
 variable "az" {
@@ -48,12 +43,8 @@ variable "az" {
   description = "Availability-Zones - Should match numbers of CIDRs given and AWS Region"
 }
 
-variable "ssh_file_name" {
+variable "db_subnet" {
   type        = string
-  description = "Naming convention for your SSH file"
+  description = "Database Subnet ID"
 }
 
-variable "key_pair_name" {
-  type        = string
-  description = "Your SSH key.pub naming convention - You'll have to create and rename SSH key accordingly"
-}

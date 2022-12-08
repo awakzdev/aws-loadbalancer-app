@@ -1,15 +1,3 @@
-module "ec2" {
-  source = "../ec2"
-
-  name_prefix   = var.name_prefix
-  key_pair_name = var.key_pair_name
-  vpc_cidr      = var.vpc_cidr
-  subnet_cidrs  = var.subnet_cidrs
-  aws_region    = var.aws_region
-  ssh_file_name = var.ssh_file_name
-  az            = var.az
-}
-
 ####################
 #     Security
 ####################
@@ -18,7 +6,7 @@ module "ec2" {
 resource "aws_security_group" "rds_sg" {
   name        = "rds-sg-${var.name_prefix}"
   description = "Database - Reserved for SG Role"
-  vpc_id      = module.ec2.vpc_id
+  vpc_id      = var.vpc_id
 
   tags = {
     Name = "${var.name_prefix}-mysql"
@@ -32,7 +20,7 @@ resource "aws_security_group_rule" "db_ec2_traffic" {
   to_port                  = "3306"
   protocol                 = "tcp"
   security_group_id        = aws_security_group.rds_sg.id
-  source_security_group_id = module.ec2.ec2_sg
+  source_security_group_id = var.ec2_sg
 }
 
 # SG Role - Allows EC2 to RDS Connection
@@ -41,7 +29,7 @@ resource "aws_security_group_rule" "ec2_db_traffic" {
   from_port                = "3306"
   to_port                  = "3306"
   protocol                 = "tcp"
-  security_group_id        = module.ec2.ec2_sg
+  security_group_id        = var.ec2_sg
   source_security_group_id = aws_security_group.rds_sg.id
 }
 
@@ -74,7 +62,7 @@ resource "aws_db_instance" "db" {
 
   availability_zone      = var.az[0]
   vpc_security_group_ids = [aws_security_group.rds_sg.id]
-  db_subnet_group_name   = module.ec2.db_subnet
+  db_subnet_group_name   = var.db_subnet
 
   tags = {
     Name = "RDS-${var.name_prefix}"

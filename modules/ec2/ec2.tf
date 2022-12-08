@@ -1,14 +1,3 @@
-module "network" {
-  source = "../network"
-
-  aws_region   = var.aws_region
-  vpc_cidr     = var.vpc_cidr
-  subnet_cidrs = var.subnet_cidrs
-  az           = var.az
-  name_prefix  = var.name_prefix
-}
-
-
 ####################
 #     Security
 ####################
@@ -17,7 +6,7 @@ module "network" {
 resource "aws_security_group" "ec2_sg" {
   name        = "ec2-sg-${var.name_prefix}"
   description = "Allows SSH and outbound connection"
-  vpc_id      = module.network.vpc_id
+  vpc_id      = var.vpc_id
 
   # SSH
   ingress {
@@ -69,7 +58,7 @@ resource "aws_instance" "ec2" {
   instance_type          = "t2.micro"
   ami                    = data.aws_ami.server_ami.id
   key_name               = aws_key_pair.auth.id
-  subnet_id              = module.network.subnet_id[count.index]
+  subnet_id              = var.subnet_id[count.index]
   vpc_security_group_ids = [aws_security_group.ec2_sg.id]
   user_data              = <<EOF
           #!/bin/bash

@@ -32,3 +32,13 @@ variable "ssh_file_name" {
   type        = string
   description = "Naming convention for your .pub SSH Key (key.pub)"
 }
+
+variable "vpc_id" {
+  type        = string
+  description = "AWS VPC ID"
+}
+
+variable "subnet_id" {
+  type        = any
+  description = "AWS Subnet ID"
+}

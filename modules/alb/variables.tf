@@ -1,34 +1,14 @@
-variable "name_prefix" {
+variable "ec2_sg" {
   type        = string
-  description = "Common naming for tagged resources"
+  description = "Security group for EC2 Instance - SG Role (Pairing)"
 }
 
-variable "vpc_cidr" {
+variable "vpc_id" {
   type        = string
-  description = "CIDR block of the VPC where the resources will be created"
+  description = "AWS VPC ID"
 }
 
-variable "subnet_cidrs" {
-  type        = list(any)
-  description = "A list of Subnets CIDR's - Should consist of minimum 2"
-}
-
-variable "az" {
-  type        = list(any)
-  description = "Availability-Zones - Should match numbers of CIDRs given and AWS Region"
-}
-
-variable "key_pair_name" {
-  type        = string
-  description = "Key pair naming"
-}
-
-variable "ssh_file_name" {
-  type        = string
-  description = "Your SSH key.pub naming should match this"
-}
-
-variable "domain_name_alias" {
+variable "domain_alias" {
   type        = string
   description = "A domain you want to issue the certificate for"
 }
@@ -38,7 +18,22 @@ variable "environment" {
   description = "Working environment - i.e (prod, staging, dev)"
 }
 
-variable "aws_region" {
+variable "name_prefix" {
   type        = string
-  description = "Region where all AWS Resources will be created"
+  description = "Common naming for tagged resources"
+}
+
+variable "subnet_id" {
+  type        = any
+  description = "AWS VPC Subnet ID(s)"
+}
+
+variable "subnet_cidrs" {
+  type        = list(any)
+  description = "A list of Subnets CIDR's - Should consist of minimum 2"
+}
+
+variable "ec2_id" {
+  type        = any
+  description = "AWS EC2 Instance ID(s)"
 }
