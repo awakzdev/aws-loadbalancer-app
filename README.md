@@ -43,14 +43,10 @@ aws_secret_access_key = foo
 
 
 ## Installation
-Before installing please edit the following values `ACM.tf` (domain name)
+Creating your terraform.tfvars
 ```
-resource "aws_acm_certificate" "ssl" {
-  domain_name       = "modules.cclab.cloud-castles.com"
-  
-data "aws_route53_zone" "example" {
-  name         = "cclab.cloud-castles.com"
-  
-resource "aws_route53_record" "alias_route53_record" {
-  name    = "modules.cclab.cloud-castles.com"
+cat <<EOF > terraform.tfvars
+route53_zone = "<your-route53_zone-domain_name_here>"
+sub_domain = "<your-domain-subname_here>"
+EOF
 ```
