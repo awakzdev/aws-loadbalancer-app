@@ -40,3 +40,17 @@ aws_secret_access_key = foo
  ```
  ## Generating an SSH Key
  `ssh-keygen -t ed25519` > You'll need to rename it to 'key' otherwise please edit the resource aws_key_pair under main.tf.
+
+
+## Installation
+Before installing please edit the following values `ACM.tf` (domain name)
+```
+resource "aws_acm_certificate" "ssl" {
+  domain_name       = "modules.cclab.cloud-castles.com"
+  
+data "aws_route53_zone" "example" {
+  name         = "cclab.cloud-castles.com"
+  
+resource "aws_route53_record" "alias_route53_record" {
+  name    = "modules.cclab.cloud-castles.com"
+```
