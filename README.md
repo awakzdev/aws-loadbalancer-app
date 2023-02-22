@@ -45,7 +45,7 @@ aws_secret_access_key = foo
 ## Creating terraform.tfvars
 ```
 cat <<EOF > terraform.tfvars
-route53_zone = "<your-route53_zone-domain_name_here>"
-sub_domain = "<your-domain-subname_here>"
+route53_zone = "<your-route53-zone-domain-name-here>"
+sub_domain = "<your-domain-subname-here>"
 EOF
 ```
