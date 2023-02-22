@@ -42,8 +42,7 @@ aws_secret_access_key = foo
  `ssh-keygen -t ed25519` > You'll need to rename it to 'key' otherwise please edit the resource aws_key_pair under main.tf.
 
 
-## Installation
-Creating your terraform.tfvars
+## Creating terraform.tfvars
 ```
 cat <<EOF > terraform.tfvars
 route53_zone = "<your-route53_zone-domain_name_here>"
