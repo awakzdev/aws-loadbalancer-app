@@ -37,7 +37,7 @@ Once terraform is done running your Sub domain should return an Apache template 
 ```
 cat <<EOF > terraform.tfvars
 route53_zone = "<Route53-Zone>" # Example - domain.com
-sub_domain = "<your-domain-subname-here>" # Example - foo.domain.com
+sub_domain = "<Domain-Subname>" # Example - foo.domain.com
 name_prefix = "<Resource-Naming-Prefix>" # Example - Staging
 EOF
 ```
