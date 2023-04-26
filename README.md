@@ -26,26 +26,18 @@ There should be a module for each of the components:
 Each module should configure its own security groups, using arguments from other modules'
 output.
 
-## Setting credentials 
- ##### _Credentials key file is set within ~/.aws/credentials - Please [refer to documentation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)_ or use `aws configure` as a different approach.
-*Your credentials file should look like this*
- ```
- [default]
-# This key identifies your AWS account.
-aws_access_key_id = foo
-# Treat this secret key like a password. Never share it or store it in source
-# control. If your secret key is ever disclosed, immediately use IAM to delete
-# the key pair and create a new one.
-aws_secret_access_key = foo
- ```
- ## Generating an SSH Key
- `ssh-keygen -t ed25519` > You'll need to rename it to 'key' otherwise please edit the resource aws_key_pair under main.tf.
+## Result
+Once terraform is done running your Sub domain should return an Apache template with a TLS Certificate.
+![chrome_D1yxqirAJY](https://user-images.githubusercontent.com/96201125/234573009-264794f0-539b-4b6b-853a-dc7cfbf997d5.png)
 
+ ## Generating an SSH Key
+ `ssh-keygen -t ed25519` > You'll need to rename it to 'key' otherwise please edit the resource `aws_key_pair` under `main.tf`.
 
 ## Creating terraform.tfvars
 ```
 cat <<EOF > terraform.tfvars
-route53_zone = "<your-route53-zone-domain-name-here>"
-sub_domain = "<your-domain-subname-here>"
+route53_zone = "<Route53-Zone>" # Example - domain.com
+sub_domain = "<your-domain-subname-here>" # Example - foo.domain.com
+name_prefix = "<Resource-Naming-Prefix>" # Example - Staging
 EOF
 ```
