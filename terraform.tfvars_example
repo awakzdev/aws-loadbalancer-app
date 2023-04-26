@@ -1,3 +1,3 @@
 route53_zone="cclab.cloud-castles.com"
-sub_domain="apache-terraform.cclab.cloud-castles.com"
+domain="apache-terraform.cclab.cloud-castles.com"
 name_prefix="Terraform"
