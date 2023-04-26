@@ -3,9 +3,9 @@ variable "route53_zone" {
   description = "Route53 zone name pointing to your domain - domain.com"
 }
 
-variable "sub_domain" {
+variable "domain" {
   type        = string
-  description = "Your subdomain - foo.domain.com"
+  description = "Your subdomain - domain.com"
 }
 
 variable "name_prefix" {
