@@ -8,3 +8,14 @@ variable "sub_domain" {
   description = "Your subdomain - foo.domain.com"
 }
 
+variable "name_prefix" {
+  type        = string
+  description = "Naming convention for AWS Resources"
+}
+
+variable "tags" {
+  type = map(string)
+  default = {
+    "Terraform" = "True"
+  }
+}

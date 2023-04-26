@@ -7,9 +7,7 @@ resource "aws_vpc" "main" {
   cidr_block         = local.json.vpc.cidr
   enable_dns_support = true
 
-  tags = {
-    Name = "dev-vpc"
-  }
+  tags = var.tags
 }
 
 # Two Subnets in different AZ - Public IP on launch
@@ -21,7 +19,8 @@ resource "aws_subnet" "public" {
   availability_zone       = each.value.subnet_az
 
   tags = {
-    Name = "${each.key}"
+    Terraform = "True"
+    Name      = "${each.key}"
   }
 }
 
@@ -29,9 +28,7 @@ resource "aws_subnet" "public" {
 resource "aws_internet_gateway" "gw" {
   vpc_id = aws_vpc.main.id
 
-  tags = {
-    Name = "dev-gw"
-  }
+  tags = var.tags
 }
 
 # Routing table - Linking GW
@@ -43,9 +40,7 @@ resource "aws_route_table" "rt" {
     gateway_id = aws_internet_gateway.gw.id
   }
 
-  tags = {
-    Name = "route-table"
-  }
+  tags = var.tags
 }
 
 # Route Table Association - Bridge for Subnet
@@ -57,15 +52,13 @@ resource "aws_route_table_association" "rt_a" {
 
 # Database Subnet group - Minimum 2 AZ required
 resource "aws_db_subnet_group" "default" {
-  name = "main"
+  name = lower("${var.name_prefix}-db-subnet-group")
   subnet_ids = [
     aws_subnet.public["vpc-subnet-one"].id,
     aws_subnet.public["vpc-subnet-two"].id
   ]
 
-  tags = {
-    Name = "db-subnet"
-  }
+  tags = var.tags
 }
 
 
@@ -80,12 +73,13 @@ resource "aws_instance" "ec2" {
   ami                    = data.aws_ami.server_ami.id
   key_name               = aws_key_pair.auth.id
   vpc_security_group_ids = [aws_security_group.ec2_sg.id]
-  subnet_id              = aws_subnet.public.id
+  subnet_id              = aws_subnet.public[each.key].id
   availability_zone      = each.value.subnet_az
   user_data              = file("userdata/install_apache.sh")
 
   tags = {
-    Name = "ubuntu-${each.key}"
+    Terraform = "True"
+    Name      = "${var.name_prefix}-${each.key}"
   }
 }
 
@@ -103,7 +97,7 @@ resource "aws_key_pair" "auth" {
 # RDS MySQL - Single AZ (eu-central-1a)
 resource "aws_db_instance" "db" {
   allocated_storage      = 20
-  identifier             = "rds-terraform"
+  identifier             = lower("${var.name_prefix}-rds")
   storage_type           = "gp2"
   engine                 = "mysql"
   engine_version         = "8.0.27"
@@ -116,9 +110,7 @@ resource "aws_db_instance" "db" {
   db_subnet_group_name   = aws_db_subnet_group.default.id
   skip_final_snapshot    = true
 
-  tags = {
-    Name = "RDSServerInstance"
-  }
+  tags = var.tags
 }
 
 
@@ -158,18 +150,16 @@ resource "aws_security_group_rule" "egress_alb_traffic" {
 
 # SG - RDS Reserved for SG Role
 resource "aws_security_group" "rds_sg" {
-  name        = "rds_sg"
-  description = "allows outbound rds traffic"
+  name        = "${var.name_prefix}-RDS_SG"
+  description = "Allow Outbound RDS traffic"
   vpc_id      = aws_vpc.main.id
 
-  tags = {
-    Name = "rds-sg"
-  }
+  tags = var.tags
 }
 
 # SG - ALB Inbound Internet traffic
 resource "aws_security_group" "alb_sg" {
-  name        = "alb-sg"
+  name        = "${var.name_prefix}-ALB-SG"
   description = "allows inbound alb traffic"
   vpc_id      = aws_vpc.main.id
 
@@ -187,15 +177,13 @@ resource "aws_security_group" "alb_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = {
-    Name = "alb-ingress-sg"
-  }
+  tags = var.tags
 }
 
 # SG - EC2 SSH And Database connection
 resource "aws_security_group" "ec2_sg" {
-  name        = "ec2-sg"
-  description = "allow ssh to ec2"
+  name        = "${var.name_prefix}-EC2-SG"
+  description = "Allows SSH to EC2"
   vpc_id      = aws_vpc.main.id
 
   # SSH
@@ -222,9 +210,7 @@ resource "aws_security_group" "ec2_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = {
-    Name = "ec2-egress-sg"
-  }
+  tags = var.tags
 }
 
 
@@ -241,9 +227,7 @@ resource "aws_acm_certificate" "ssl" {
     create_before_destroy = true
   }
 
-  tags = {
-    Environment = "test"
-  }
+  tags = var.tags
 }
 
 # ACM Certificate validation
@@ -299,7 +283,7 @@ resource "aws_route53_record" "example" {
 
 # Application Load balancer - set to two different AZ's
 resource "aws_lb" "alb" {
-  name               = "alb-dev"
+  name               = "${var.name_prefix}-ALB"
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb_sg.id]
@@ -311,9 +295,7 @@ resource "aws_lb" "alb" {
 
   enable_deletion_protection = false
 
-  tags = {
-    Environment = "dev"
-  }
+  tags = var.tags
 }
 
 # ALB HTTPS Listener - TLS Certificate
