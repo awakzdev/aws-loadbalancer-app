@@ -26,6 +26,9 @@ There should be a module for each of the components:
 Each module should configure its own security groups, using arguments from other modules'
 output.
 
+## Requirements 
+Your domain must be registered on Route53
+
 ## Result
 Once terraform is done running your Sub domain should return an Apache template with a TLS Certificate.
 ![chrome_D1yxqirAJY](https://user-images.githubusercontent.com/96201125/234573009-264794f0-539b-4b6b-853a-dc7cfbf997d5.png)
@@ -37,7 +40,7 @@ Once terraform is done running your Sub domain should return an Apache template 
 ```
 cat <<EOF > terraform.tfvars
 route53_zone = "<Route53-Zone>" # Example - domain.com
-sub_domain = "<Domain-Subname>" # Example - foo.domain.com
+domain = "<Domain>" # Example - domain.com
 name_prefix = "<Resource-Naming-Prefix>" # Example - Staging
 EOF
 ```
