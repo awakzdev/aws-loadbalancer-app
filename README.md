@@ -31,7 +31,7 @@ Once terraform is done running your Sub domain should return an Apache template 
 ![chrome_D1yxqirAJY](https://user-images.githubusercontent.com/96201125/234573009-264794f0-539b-4b6b-853a-dc7cfbf997d5.png)
 
  ## Generating an SSH Key
- `ssh-keygen -t ed25519` > You'll need to rename it to 'key' otherwise please edit the resource `aws_key_pair` under `main.tf`.
+ `ssh-keygen -t ed25519` > Please name the key as : `'key'` otherwise please edit the name under the `aws_key_pair` resource.
 
 ## Creating terraform.tfvars
 ```
