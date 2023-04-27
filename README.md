@@ -33,7 +33,12 @@ Once terraform is done running your Sub domain should return an Apache template 
 ![chrome_D1yxqirAJY](https://user-images.githubusercontent.com/96201125/234573009-264794f0-539b-4b6b-853a-dc7cfbf997d5.png)
 
  ## Generating an SSH Key
- `ssh-keygen -t ed25519` > Please name the key as : `'key'` otherwise please edit the name under the `aws_key_pair` resource.
+ ```
+ ssh-keygen -t ed25519
+ ```
+ By default your key should be named `id_ed25519.pub`. If any changes are made to the name please adjust it within the terraform.tfvars file
+ 
+ **Note - Make sure you exlude the .pub extension from the terraform.tfvars**
 
 ## Creating terraform.tfvars
 ```
@@ -41,5 +46,6 @@ cat <<EOF > terraform.tfvars
 route53_zone = "<Route53-Zone>" # Example - domain.com
 domain = "<Domain>" # Example - domain.com
 name_prefix = "<Resource-Naming-Prefix>" # Example - Staging
+ssh_key = "<SSH_Key>" # Example - id_ed25519 **(Exlude the .pub name extension)**
 EOF
 ```
