@@ -61,7 +61,6 @@ resource "aws_db_subnet_group" "default" {
   tags = var.tags
 }
 
-
 ####################
 #  Virtual-Machine
 ####################
@@ -85,10 +84,9 @@ resource "aws_instance" "ec2" {
 
 # VM Key pair
 resource "aws_key_pair" "auth" {
-  key_name   = "key"
-  public_key = file("~/.ssh/key.pub")
+  key_name   = "${var.ssh_key}"
+  public_key = file("~/.ssh/${var.ssh_key}.pub")
 }
-
 
 ####################
 #     Database
