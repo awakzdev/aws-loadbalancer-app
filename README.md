@@ -40,9 +40,9 @@ output.
 ## Creating terraform.tfvars
 ```
 cat <<EOF > terraform.tfvars
-route53_zone = "<Route53-Zone>" # Example - domain.com
-domain = "<Domain>" # Example - domain.com
-name_prefix = "<Resource-Naming-Prefix>" # Example - Staging
-ssh_key = "<SSH_Key>" # Example - id_ed25519 **(Exlude the .pub name extension)**
+route53_zone = "<Route53-Zone>"           # Example - domain.com
+domain       = "<Domain>"                 # Example - domain.com
+name_prefix  = "<Resource-Naming-Prefix>" # Example - Staging
+ssh_key      = "<SSH_Key>"                # Example - id_ed25519 **(Exlude the .pub name extension)**
 EOF
 ```
