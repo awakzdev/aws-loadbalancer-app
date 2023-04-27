@@ -28,7 +28,9 @@ output.
 
  ## Requirements
  1. Your Domain must be registered with Route53
- 2. Creating an SSH Key :
+ 2. Creating an SSH Key
+
+ You may generate an SSH Key by using the command below :
  ```
  $ ssh-keygen -t ed25519
  
