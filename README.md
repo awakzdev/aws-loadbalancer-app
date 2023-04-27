@@ -1,7 +1,7 @@
 ﻿## *Its purpose is to serve the following configuration*
 It is required to deploy a configuration consisting of the following:
 1. Two ubuntu VMs that will run an application
-2. An ALB that will route the domain modules.cclab.cloud-castles.com to the ALB on port
+2. An ALB that will route the domain to the ALB on port
 443, with an SSL certificate served by the ALB and a single target group containing both
 VMs listening on port 80.
 3. An RDS database running mysql for the application to access.
