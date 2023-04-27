@@ -13,6 +13,11 @@ variable "name_prefix" {
   description = "Naming convention for AWS Resources"
 }
 
+variable "ssh_key" {
+  type        = string
+  description = "SSH Key Name"
+}
+
 variable "tags" {
   type = map(string)
   default = {
