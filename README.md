@@ -26,8 +26,6 @@ There should be a module for each of the components:
 Each module should configure its own security groups, using arguments from other modules'
 output.
 
-Your domain must be registered on Route53
-
 ## Result
 Once terraform is done running your Sub domain should return an Apache template with a TLS Certificate.
 
