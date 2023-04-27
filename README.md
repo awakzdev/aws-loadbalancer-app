@@ -26,20 +26,15 @@ There should be a module for each of the components:
 Each module should configure its own security groups, using arguments from other modules'
 output.
 
-## Result
-Once terraform is done running your Sub domain should return an Apache template with a TLS Certificate.
-
-### **Your domain must be registered on Route53**
-![chrome_D1yxqirAJY](https://user-images.githubusercontent.com/96201125/234573009-264794f0-539b-4b6b-853a-dc7cfbf997d5.png)
-
- ## Generating an SSH Key
+ ## Requirements
+ 1. Your Domain must be registered with Route53
+ 2. Creating an SSH Key :
  ```
- ssh-keygen -t ed25519
- ```
- By default your key should be named `id_ed25519.pub`. If any changes are made to the name please adjust it within the terraform.tfvars file
+ $ ssh-keygen -t ed25519
  
+ By default your key should be named `id_ed25519.pub`. If any changes are made to the name please adjust it within the terraform.tfvars file
  **Note - Make sure you exlude the .pub extension from the terraform.tfvars**
-
+```
 ## Creating terraform.tfvars
 ```
 cat <<EOF > terraform.tfvars
