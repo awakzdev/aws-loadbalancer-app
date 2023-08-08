@@ -27,22 +27,12 @@ Each module should configure its own security groups, using arguments from other
 output.
 
  ## Requirements
- 1. Your Domain must be registered with Route53
- 2. Creating an SSH Key
+ 1. Your domain must be registered with Route53
+ 2. You'll need to create an SSH Key
 
  You may generate an SSH Key by using the command below :
  ```
- $ ssh-keygen -t ed25519
- 
- By default your key should be named `id_ed25519.pub`. If any changes are made to the name please adjust it within the terraform.tfvars file
- **Note - Make sure you exlude the .pub extension from the terraform.tfvars**
+$ ssh-keygen -t ed25519
+(The key shouldn't include the .pub extension when used within .tfvars)
 ```
-## Creating terraform.tfvars
-```
-cat <<EOF > terraform.tfvars
-route53_zone = "<Route53-Zone>"           # Example - domain.com
-domain       = "<Domain>"                 # Example - domain.com
-name_prefix  = "<Resource-Naming-Prefix>" # Example - Staging
-ssh_key      = "<SSH_Key>"                # Example - id_ed25519 **(Exlude the .pub name extension)**
-EOF
-```
+### Thats it! Your application should be served on the URL defined within `domain`.
