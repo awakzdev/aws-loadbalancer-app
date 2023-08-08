@@ -1,16 +1,32 @@
-####################
-#      Network
-####################
+# ---------------------------------------------------------------------------
+# An example terraform snippet to provision the following : 
+/*
+1. Two ubuntu VMs that will run an application
+2. An ALB that will route the domain to the ALB on port 443, with an SSL certificate served by the ALB and a single target group containing both VMs listening on port 80.
+3. An RDS database running mysql for the application to access. All components should run in a VPC, in separate subnets, and for the VMs and the load balancer internals, the subnets should be in separate AZs. The configuration should be secured so that the only connectivity allowed is the following:
+4. SSH from the internet to the VMs
+5. Port 80 and 443 between the load balancer internal IPs to the VMs
+6. Port 80 and 443 from the internet to the load balancer (with port 80 automatically redirecting to 443)
+7. Port 3306 from the VMs to the RDS
+*/
+# ---------------------------------------------------------------------------
 
-# Main VPC
+
+####################
+#
+#     Network
+#
+####################
 resource "aws_vpc" "main" {
   cidr_block         = local.json.vpc.cidr
   enable_dns_support = true
-
-  tags = var.tags
+  enable_dns_hostnames = true
+  
+  tags = {
+    Name = "${var.name_prefix}-vpc"
+  }
 }
 
-# Two Subnets in different AZ - Public IP on launch
 resource "aws_subnet" "public" {
   for_each                = local.api
   vpc_id                  = aws_vpc.main.id
@@ -20,52 +36,64 @@ resource "aws_subnet" "public" {
 
   tags = {
     Terraform = "True"
-    Name      = "${each.key}"
+    Name      = "${var.name_prefix}-${each.key}"
   }
 }
 
-# Internet Gateway 
-resource "aws_internet_gateway" "gw" {
+resource "aws_internet_gateway" "main_gw" {
   vpc_id = aws_vpc.main.id
 
-  tags = var.tags
+  tags = {
+    Name = "${var.name_prefix}-igw"
+  }
 }
 
-# Routing table - Linking GW
-resource "aws_route_table" "rt" {
+resource "aws_route_table" "main_rt" {
   vpc_id = aws_vpc.main.id
 
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.gw.id
+    gateway_id = aws_internet_gateway.main_gw.id
   }
 
-  tags = var.tags
+  tags = {
+    Name = "${var.name_prefix}-rt"
+  }
 }
 
-# Route Table Association - Bridge for Subnet
-resource "aws_route_table_association" "rt_a" {
+resource "aws_route_table_association" "rta" {
   for_each       = local.api
   subnet_id      = aws_subnet.public[each.key].id
-  route_table_id = aws_route_table.rt.id
+  route_table_id = aws_route_table.main_rt.id
 }
 
-# Database Subnet group - Minimum 2 AZ required
-resource "aws_db_subnet_group" "default" {
+resource "aws_db_subnet_group" "db_subnet_grp" {
   name = lower("${var.name_prefix}-db-subnet-group")
   subnet_ids = [
     aws_subnet.public["vpc-subnet-one"].id,
     aws_subnet.public["vpc-subnet-two"].id
   ]
 
-  tags = var.tags
+  tags = {
+    Name = "${var.name_prefix}-rta"
+  }
 }
 
 ####################
+#
 #  Virtual-Machine
+#
 ####################
+data "aws_ami" "server_ami" {
+  most_recent = true
+  owners      = ["099720109477"]
 
-# EC2 Instance on 2 different AZ's
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"] # Pulls the most recent AMI - set by *
+  }
+}
+
 resource "aws_instance" "ec2" {
   for_each               = local.api
   instance_type          = "t2.micro"
@@ -74,7 +102,7 @@ resource "aws_instance" "ec2" {
   vpc_security_group_ids = [aws_security_group.ec2_sg.id]
   subnet_id              = aws_subnet.public[each.key].id
   availability_zone      = each.value.subnet_az
-  user_data              = file("userdata/install_apache.sh")
+  user_data              = file("userdata/install_nginx.sh")
 
   tags = {
     Terraform = "True"
@@ -82,41 +110,42 @@ resource "aws_instance" "ec2" {
   }
 }
 
-# VM Key pair
 resource "aws_key_pair" "auth" {
   key_name   = "${var.ssh_key}"
   public_key = file("~/.ssh/${var.ssh_key}.pub")
 }
 
 ####################
+#
 #     Database
+#
 ####################
-
-# RDS MySQL - Single AZ (eu-central-1a)
 resource "aws_db_instance" "db" {
   allocated_storage      = 20
-  identifier             = lower("${var.name_prefix}-rds")
-  storage_type           = "gp2"
-  engine                 = "mysql"
-  engine_version         = "8.0.27"
-  instance_class         = "db.t2.micro"
-  db_name                = "rds_mysql"
-  username               = "admin"
-  password               = "password"
+  storage_type           = var.db_storage_type
+  identifier              = "${var.name_prefix}-rds"
+  engine                 = var.db_engine
+  engine_version         = var.db_version == "" ? null : var.db_version
+  instance_class         = var.db_instance_class == "" ? "db.t2.micro" : var.db_instance_class
+  db_name                = var.db_name
+  username               = var.db_username
+  password               = var.db_password
   availability_zone      = "eu-central-1a"
   vpc_security_group_ids = [aws_security_group.rds_sg.id]
-  db_subnet_group_name   = aws_db_subnet_group.default.id
+  db_subnet_group_name   = aws_db_subnet_group.db_subnet_grp.id
   skip_final_snapshot    = true
 
-  tags = var.tags
+  tags = {
+    Name = "${var.name_prefix}-db"
+  }
 }
 
 
 ####################
+#
 #     Security
+#
 ####################
-
-# SG Role - Allows EC2 to ALB Connection 
 resource "aws_security_group_rule" "db_ec2_traffic" {
   type                     = "ingress"
   from_port                = "3306"
@@ -126,8 +155,7 @@ resource "aws_security_group_rule" "db_ec2_traffic" {
   source_security_group_id = aws_security_group.ec2_sg.id
 }
 
-# SG Role - Allows EC2 to DB Connection 
-resource "aws_security_group_rule" "ingress_ec2_traffic" {
+resource "aws_security_group_rule" "http_alb_to_ec2" {
   type                     = "ingress"
   from_port                = "80"
   to_port                  = "80"
@@ -136,26 +164,16 @@ resource "aws_security_group_rule" "ingress_ec2_traffic" {
   source_security_group_id = aws_security_group.alb_sg.id
 }
 
-# SG Role - Allows ALB to EC2 Connection 
-resource "aws_security_group_rule" "egress_alb_traffic" {
-  type                     = "egress"
-  from_port                = "80"
-  to_port                  = "80"
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.alb_sg.id
-  source_security_group_id = aws_security_group.ec2_sg.id
-}
-
-# SG - RDS Reserved for SG Role
 resource "aws_security_group" "rds_sg" {
-  name        = "${var.name_prefix}-RDS_SG"
+  name        = "${var.name_prefix}-RDS-SG"
   description = "Allow Outbound RDS traffic"
   vpc_id      = aws_vpc.main.id
 
-  tags = var.tags
+  tags = {
+    Name = "${var.name_prefix}-rds-sg"
+  }
 }
 
-# SG - ALB Inbound Internet traffic
 resource "aws_security_group" "alb_sg" {
   name        = "${var.name_prefix}-ALB-SG"
   description = "allows inbound alb traffic"
@@ -175,16 +193,22 @@ resource "aws_security_group" "alb_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = var.tags
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  tags = {
+    Name = "${var.name_prefix}-alb-sg"
+  }
 }
 
-# SG - EC2 SSH And Database connection
 resource "aws_security_group" "ec2_sg" {
   name        = "${var.name_prefix}-EC2-SG"
   description = "Allows SSH to EC2"
   vpc_id      = aws_vpc.main.id
 
-  # SSH
   ingress {
     from_port   = 22
     to_port     = 22
@@ -192,62 +216,69 @@ resource "aws_security_group" "ec2_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Egress - Internet
-  egress {
+  ingress {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Database connection
-  egress {
-    from_port   = 3306
-    to_port     = 3306
+  ingress {
+    from_port   = 443
+    to_port     = 443
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = var.tags
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "${var.name_prefix}-ec2-sg"
+  }
 }
 
 
 ####################
+#
 #  Certificate - ACM
+#
 ####################
-
-# ACM Certificate issue
 resource "aws_acm_certificate" "ssl" {
-  domain_name       = var.sub_domain
+  domain_name       = var.domain
   validation_method = "DNS"
 
   lifecycle {
     create_before_destroy = true
   }
 
-  tags = var.tags
+  tags = {
+    Name = "${var.name_prefix}-alb-ssl"
+  }
 }
 
-# ACM Certificate validation
-resource "aws_acm_certificate_validation" "example" {
+resource "aws_acm_certificate_validation" "cert_validation" {
   certificate_arn         = aws_acm_certificate.ssl.arn
-  validation_record_fqdns = [for record in aws_route53_record.example : record.fqdn]
+  validation_record_fqdns = [for record in aws_route53_record.main_route53 : record.fqdn]
 }
   
 ####################
+#
 #   Route 53 - DNS
+#
 ####################
-
-# Route 53 Zone
-data "aws_route53_zone" "example" {
+data "aws_route53_zone" "retrive_route53" {
   name         = var.route53_zone
   private_zone = false
 }
 
-# Route 53 - ALB Alias
-resource "aws_route53_record" "alias_route53_record" {
-  zone_id = data.aws_route53_zone.example.zone_id
-  name    = var.sub_domain
+resource "aws_route53_record" "a_record_route53" {
+  zone_id = data.aws_route53_zone.retrive_route53.zone_id
+  name    = var.domain
   type    = "A"
 
   alias {
@@ -257,8 +288,7 @@ resource "aws_route53_record" "alias_route53_record" {
   }
 }
 
-# Route 53 - Certificate Record
-resource "aws_route53_record" "example" {
+resource "aws_route53_record" "main_route53" {
   for_each = {
     for dvo in aws_acm_certificate.ssl.domain_validation_options : dvo.domain_name => {
       name   = dvo.resource_record_name
@@ -272,14 +302,14 @@ resource "aws_route53_record" "example" {
   records         = [each.value.record]
   ttl             = 60
   type            = each.value.type
-  zone_id         = data.aws_route53_zone.example.zone_id
+  zone_id         = data.aws_route53_zone.retrive_route53.zone_id
 }
 
 ####################
+#
 #   Load Balancer
+#
 ####################
-
-# Application Load balancer - set to two different AZ's
 resource "aws_lb" "alb" {
   name               = "${var.name_prefix}-ALB"
   internal           = false
@@ -293,10 +323,11 @@ resource "aws_lb" "alb" {
 
   enable_deletion_protection = false
 
-  tags = var.tags
+  tags = {
+    Name = "${var.name_prefix}-alb"
+  }
 }
 
-# ALB HTTPS Listener - TLS Certificate
 resource "aws_lb_listener" "alb_listener_tls" {
   load_balancer_arn = aws_lb.alb.arn
   port              = "443"
@@ -306,11 +337,10 @@ resource "aws_lb_listener" "alb_listener_tls" {
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.alb-target.arn
+    target_group_arn = aws_lb_target_group.alb_target.arn
   }
 }
 
-# ALB HTTPS Listener - Redirects HTTP ALB DNS traffic to domain URL
 resource "aws_lb_listener" "alb_listener_redirect" {
   load_balancer_arn = aws_lb.alb.arn
   port              = "80"
@@ -330,18 +360,16 @@ resource "aws_lb_listener" "alb_listener_redirect" {
   }
 }
 
-# ALB Target Group - Receives HTTP traffic
-resource "aws_lb_target_group" "alb-target" {
-  name     = "alb-target-group"
+resource "aws_lb_target_group" "alb_target" {
+  name     = "${var.name_prefix}-terraform-alb-target"
   port     = 80
   protocol = "HTTP"
   vpc_id   = aws_vpc.main.id
 }
 
-# ALB - Target Group on port 80 / Register VMs
 resource "aws_lb_target_group_attachment" "group" {
   for_each         = local.api
-  target_group_arn = aws_lb_target_group.alb-target.arn
+  target_group_arn = aws_lb_target_group.alb_target.arn
   target_id        = aws_instance.ec2[each.key].id
   port             = 80
 }

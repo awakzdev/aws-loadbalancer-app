@@ -1,5 +1,8 @@
  Terraform files
 
+# Lock files
+*.lock.*
+
 # Local .terraform directories
 **/.terraform/*
 

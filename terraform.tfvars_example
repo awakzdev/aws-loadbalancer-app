@@ -1,3 +1,0 @@
-route53_zone="example.com"
-domain="apache-terraform.example.com"
-name_prefix="staging"
