@@ -20,6 +20,7 @@ variable "ssh_key" {
 
 variable "tags" {
   type = map(string)
+  description = "Your AWS resources will be tagged with the following"
   default = {
     "Terraform" = "True"
   }
@@ -55,8 +56,10 @@ variable "db_version" {
 
 variable "db_username" {
   type = string
+  description = "Your database username"
 }
 
 variable "db_password" {
   type = string
+  description = "Your database password"
 }
