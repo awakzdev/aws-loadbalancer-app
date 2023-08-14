@@ -1,3 +1,9 @@
+variable "aws_region" {
+  type        = string
+  description = "Your AWS Region in which resources will be deployed"
+  default     = "eu-central-1"
+}
+
 variable "route53_zone" {
   type        = string
   description = "Route53 zone name pointing to your domain - domain.com"
