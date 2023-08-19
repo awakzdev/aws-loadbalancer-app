@@ -36,3 +36,7 @@ $ ssh-keygen -t ed25519
 (The key shouldn't include the .pub extension when used within .tfvars)
 ```
 ### Thats it! Your application should be served on the URL defined within `domain`.
+
+
+# Feedback and Contributions
+Feedback is welcomed, issues, and pull requests! If you have any suggestions or find any bugs, please open an issue on my GitHub repository.
