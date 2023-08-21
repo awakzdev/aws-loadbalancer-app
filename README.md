@@ -34,14 +34,14 @@ output.
 5. AWS CLI OR environments variables configured with access credentials (optional, but recommended for easier management).
 
 ## Configuration
-- route53_zone: The primary domain managed by AWS Route53.
-- domain: The specific subdomain for your website (e.g., sub.domain.com, Your application will be served on this URL).
-- name_prefix: Naming prefix for your environment or resources (e.g., Staging, Dev, Production).
-- ssh_key: Name of the SSH key (Note: a `.pub` extension will be added to the name).
-- db_engine: Database engine choice (options: mysql, postgres, mariadb, aurora).
-- db_name: Name identifier for your RDS instance.
-- db_username: Database username (Note: Must start with a letter and contain only alphanumeric characters).
-- db_password: Database password (Note: Minimum of 8 characters).
+- **route53_zone**: The primary domain managed by AWS Route53.
+- **domain**: The specific subdomain for your website (e.g., sub.domain.com, Your application will be served on this URL).
+- **name_prefix**: Naming prefix for your environment or resources (e.g., Staging, Dev, Production).
+- **ssh_key**: Name of the SSH key (Note: a `.pub` extension will be added to the name).
+- **db_engine**: Database engine choice (options: mysql, postgres, mariadb, aurora).
+- **db_name**: Name identifier for your RDS instance.
+- **db_username**: Database username (Note: Must start with a letter and contain only alphanumeric characters).
+- **db_password**: Database password (Note: Minimum of 8 characters).
 
 You may use this sample for your convenience
 ```
