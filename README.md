@@ -31,6 +31,7 @@ output.
 2. An AWS account with appropriate permissions.
 3. You must have a registered domain within Route53.
 4. An SSH Key.
+5. AWS CLI OR environments variables configured with access credentials (optional, but recommended for easier management).
 
 ## Configuration
 - route53_zone: The primary domain managed by AWS Route53.
