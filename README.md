@@ -27,8 +27,10 @@ Each module should configure its own security groups, using arguments from other
 output.
 
 ## Requirements
-1. You must have a registered domain.
-2. Create an SSH Key.
+1. Terraform installed.
+2. An AWS account with appropriate permissions.
+3. You must have a registered domain within Route53.
+4. An SSH Key.
 
 ## Configuration
 - route53_zone: The primary domain managed by AWS Route53.
