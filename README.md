@@ -27,15 +27,15 @@ Each module should configure its own security groups, using arguments from other
 output.
 
  ## Requirements
- 1. Your domain must be registered with Route53
- 2. You'll need to create an SSH Key
+ 1. You must have a registered domain.
+ 2. Create an SSH Key.
 
- You may generate an SSH Key by using the command below :
+Generating an SSH Key:
  ```
 $ ssh-keygen -t ed25519
-(The key shouldn't include the .pub extension when used within .tfvars)
 ```
-### Thats it! Your application should be served on the URL defined within `domain`.
+**The key shouldn't include the .pub extension when used within .tfvars**
+### Thats it! Your application should be served on the URL defined within the domain variable.
 
 
 # Feedback and Contributions
