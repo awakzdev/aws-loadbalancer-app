@@ -26,17 +26,31 @@ There should be a module for each of the components:
 Each module should configure its own security groups, using arguments from other modules'
 output.
 
- ## Requirements
- 1. You must have a registered domain.
- 2. Create an SSH Key.
+## Requirements
+1. You must have a registered domain.
+2. Create an SSH Key.
 
-Generating an SSH Key:
- ```
-$ ssh-keygen -t ed25519
+## Configuration
+- route53_zone: The primary domain managed by AWS Route53.
+- domain: The specific subdomain for your website (e.g., sub.domain.com, Your application will be served on this URL).
+- name_prefix: Naming prefix for your environment or resources (e.g., Staging, Dev, Production).
+- ssh_key: Name of the SSH key (Note: a `.pub` extension will be added to the name).
+- db_engine: Database engine choice (options: mysql, postgres, mariadb, aurora).
+- db_name: Name identifier for your RDS instance.
+- db_username: Database username (Note: Must start with a letter and contain only alphanumeric characters).
+- db_password: Database password (Note: Minimum of 8 characters).
+
+You may use this sample for your convenience
 ```
-**The key shouldn't include the .pub extension when used within .tfvars**
-### Thats it! Your application should be served on the URL defined within the domain variable.
-
+route53_zone="domain.com"
+domain="example.domain.com"
+name_prefix="staging"
+ssh_key="id_ed25519"
+db_engine="mysql"
+db_name="rds"
+db_username="admin"
+db_password="password"
+```
 
 # Feedback and Contributions
 Feedback is welcomed, issues, and pull requests! If you have any suggestions or find any bugs, please open an issue on my GitHub repository.
